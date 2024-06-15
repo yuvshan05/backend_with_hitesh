@@ -1,0 +1,11 @@
+*
+dekho token same hota hai generate karne ka tareeka v same hota hai but refresh and access ek modern day practicee hai 
+concisely access token short lived hote hai and refresh token long lived hote hai
+jab tak aapke pass access token hai tab tak aap jahan par aap ko authentication ki jrurat hai utna time tk kar skte hai 
+but baar baar password likhna annoy hota hai 
+isliye refresh token hota hai jisko hum database mein v save krte hai wese validate access se hi krte hai 
+but har baar password likhne ki jrurat nahi hai aap ek baar end point hit kr do phir aapke pass jo refresh token hai and mere pass jo refresh token hai wo hum match kar lete hai agar match hai to naya access token de denge
+access token and refresh token mein difference kya hai 
+access token hota hai ki kitne same tak user ko server par banaye rakhna hai 
+*
+ab end point hit krte hai humlog taaki login password baar baar na likhna pade since access token short lived hai to refresh token ko validate krte hai end point hit krke
