@@ -13,6 +13,8 @@ import {User} from "../models/users.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken"
+import { response } from "express";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async(userId)=>{
    try {
@@ -242,7 +244,7 @@ const changeCurrentPassword = asyncHandler(async(req , res)=>{
 const getCurrentUser = asyncHandler( async(req, res)=>{
    return res
    .status(200)
-   .json(200 , req.user ,"current user fetch succesfully")
+   .json(new apiResponse(200 , req.user ,"current user fetch succesfully"))
 })
 
 const updateAccountDetails = asyncHandler(async(req , res)=>{
@@ -252,7 +254,7 @@ const updateAccountDetails = asyncHandler(async(req , res)=>{
       throw new apiError(404 , "All fields are required")
    }
 
-   const user = User.findByIdAndUpdate(
+   const user =await User.findByIdAndUpdate(
       req.user?._id,
       {
          $set:{
@@ -328,6 +330,141 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
    )
 })
 
+
+const getUserChannelProfile = asyncHandler(async(req, res)=>{
+   //for this ham user url se find krenge jese ki youtube.com/chai_aur_code to params se data lena padega
+   const {username} = req.params
+   if(!username){
+      throw new apiError(400 , "Username is missing")
+   }
+
+   //User.find({username}) not good as you will find that id and then apply aggregation better ki hum aggregation use kr lein  and find kar lega use and automatically phir aage uspe hi operation krega
+   const channel = await User.aggregate([
+      {
+         $match:{
+            username: username?.toLowerCase()
+         }
+      },
+      {
+         $lookup:{
+            from: "subscriptions",//Subcription jo hai database mein lowercase and plural mein store hoga it is a models subscription.model.js
+            localField:"_id",
+            foreignField: "channel",
+            as:"Subscribers"
+         }
+      },
+      {
+         $lookup:{
+            from: "subscriptions",
+            localField:"_id",
+            foreignField: "subscriber",
+            as:"SubscriberdTo"
+         }
+      },
+      {
+         $addFields:{
+            subscribersCount:{
+                 $size:"$subscribers"
+            },
+            channelsSubscribedToCount:{
+               $size:"$subscribedTo"
+            },
+            isSubscribed:{//dekhtat hai ki channel mein subscribe ho ki nhai
+               $cond:{
+                  //3 condition hota hai if then else 
+                  if:{
+                     $in:[req.user?._id , "$subscribers.subscriber"]//wo user subscriber ke list mein hai ki nhi
+                  },
+                  then:true,
+                  else:false
+               }
+            }
+         }
+      },
+      {
+         $project:{//ye projection deta hai ki ye saari chiz nahi deta hai bas selected field deta hai jisko dena hai usko 1 kar dete hai 
+            fullname:1,
+            username:1,
+            subscribersCount:1,
+            channelsSubscribedToCount:1,
+            isSubscribed:1,
+            avatar:1,
+            coverImage:1,
+            email:1
+         }
+      }
+   ])
+
+   if (!channel?.length) {
+      throw new apiError(404 , "Channel does not exist")
+   }
+
+   return res
+   .status(200)
+   .json(
+      new apiResponse(200 , channel[0] , 
+         "User channel fetched successfully "
+      )
+   )
+})
+
+const getWatchHistory = asyncHandler(async (req, res)=>{
+   //._id se string aata hai jisko mongoose apne aap id nikal leta hai but agar aap aggregate use kr rehe hai to aapko ye khud se nikal leta hai kyunki ye aapko mongoose nahi kr ke dega aur wo _id waale line se hoga
+   const user = await User.aggregate([
+      {
+         $match:{
+            _id: new mongoose.Types.ObjectId(req.user._id)
+         }
+      },
+      {
+         $lookup:{
+            from: "videos",
+            localField:"watchHistory",
+            foreignField:"_id",
+            as: "watchHistory",
+            //ek subpipeline lagaana padega for finding owner
+            pipeline:[
+               {
+                  //lookup se array aata hai is liye next pipeline likhe hai like we need just first
+                  $lookup:{
+                     from: "users",
+                     localField:"owner",
+                     foreignField:"_id",
+                     as: "owner",
+                     pipeline:[
+                        {
+                           $project:{
+                              fullname:1,
+                              username:1,
+                              avatar:1
+                           }
+                        }
+                     ]
+                  }
+               },
+               {//ab is array ka first element hi chahiye to ye ek aur subpipeline likh rahe hai
+                  $addFields:{
+                     owner:{
+                        $first: "$owner"//isse first aa jayega
+                     }
+                  }
+               }
+            ]
+         }
+      }
+   ])
+
+   return res
+   .status(200)
+   .json(
+      new apiResponse(
+         200,
+         user[0].watchHistory,
+         "Watch History fetch successfully"
+      )
+   )
+})
+
 export {
    registerUser,
    loginUser,
@@ -337,5 +474,7 @@ export {
    getCurrentUser,
    updateAccountDetails,
    updateUserAvatar,
-   updateUserCoverImage
+   updateUserCoverImage,
+   getUserChannelProfile,
+   getWatchHistory
 }

@@ -9,3 +9,60 @@ access token and refresh token mein difference kya hai
 access token hota hai ki kitne same tak user ko server par banaye rakhna hai 
 *
 ab end point hit krte hai humlog taaki login password baar baar na likhna pade since access token short lived hai to refresh token ko validate krte hai end point hit krke
+
+//to count the number of subscribers 
+just the count the number of document who has subscribd to that channel
+isme mongo db mein kya hota hai jese aap naya channel create kroge to ek channel create hoga
+thats why to count subscribers count channel
+to count channel count subscriber 
+
+
+//mongo db aggregation pipelines
+agar ek stage mein aap koi filtering laga diye to next stage mein wahi fileterd elements hi original data sets hai 
+for ex you filtered out 50 elements in the first stage and in the second stage the 50 elements are the original data set
+let takes two sample data to perform the join operation 
+books:
+{
+    _id: 1
+    title: "The great gatsby"
+    author_id: 100
+    genre: "classic"
+}
+authors:
+{
+    _id: 100
+    name: "yuvi"
+    birth_date: 1890 
+}
+now go to aggregation section of atlas 
+[
+    {},//1st pipelines
+    {},//2nd pipelines
+    {}//3rd pipelines
+]
+
+$match--> where clause ke trah find krne wala hota hai
+$lookup--> to join
+from: isme kon se table ko join krna hai 
+localfield: tum jo books mein ho usme kon hai
+as: iss result ko kis naam se save krna hai
+ab iska return value ARRAY aata hai 
+[
+    {
+        $lookup:{
+            from: "authors",
+            localfield: "author_id",
+            foreignField: "_id",
+            as: "author_details"
+        }
+    },
+    {
+        $addFields:{
+            author_details: {
+                $first: ["author_details",0]//author_details ka 1st element jo array hai wo de deta hai 
+            }
+        }
+    }
+]
+
+dekho user se bahut kuch field chahiye jese subscriber ya channel jise mene subscribe kiya hai go to use controller for reference(332 line)
