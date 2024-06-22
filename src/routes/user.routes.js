@@ -45,7 +45,7 @@ router.route("/current-user").get(verifyJWT , getCurrentUser)
 router.route("/update-account").patch(verifyJWT , updateAccountDetails)
 router.route("/avatar").patch(verifyJWT , upload.single("avatar"),updateUserAvatar)
 //avatar.single("avatar")ka matlab hai single file hi upload hogi and uska naam avatar hoga
-router.route("/cover-image").patch(verifyJWT , upload.single("/coverImage"),updateUserCoverImage)
+router.route("cover-image").patch(verifyJWT , upload.single("/coverImage"),updateUserCoverImage)
 
 //jab params se lena hai data to iss form mein lo and : ke baad wahi likhna jisme expect kr rehe ho
 router.route("/c/:username").get(verifyJWT , getUserChannelProfile)
