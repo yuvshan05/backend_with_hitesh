@@ -1,5 +1,6 @@
 import mongoose,{Schema} from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+//ye aggregate kiya krta hia ki limited number of videos ko hi ek page pe rakhta hai taaki alag alg page pe ho
 
 const videoSchema = new Schema({
     videoFile:{
